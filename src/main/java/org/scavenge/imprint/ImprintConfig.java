@@ -30,6 +30,6 @@ public class ImprintConfig
   
   private static ImprintConfig createDefault()
   {
-    return new ImprintConfig("imprint", "scavenge.org", 3306, "imprint", "ralphtango");
+    return new ImprintConfig("imprint", "*", 3306, "imprint", "*");
   }
 }
