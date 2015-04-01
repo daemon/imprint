@@ -15,6 +15,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.scavenge.imprint.database.ImprintDatabase;
 import org.scavenge.imprint.database.statement.DatabaseQuery;
 
 public class StatementExecutor
@@ -30,6 +31,8 @@ public class StatementExecutor
   private final int _capacity = 512;
   private final int _queueCapacity = 100000;
   
+  public long timingC = 0;
+    
   public StatementExecutor(Connection conn)
   {
     this._preparedStrToStatement = new ConcurrentHashMap<String, PreparedStatement>();
@@ -45,6 +48,15 @@ public class StatementExecutor
   
   public void reset()
   {
+    if (this._conn != null)
+      try
+      {
+        this._conn.close();
+      } catch (SQLException e)
+      {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } 
     this._conn = null;
     this._preparedStrToStatement.clear();
   }
@@ -59,28 +71,10 @@ public class StatementExecutor
       this._queriesNotEmpty.signal();
       this._queriesLock.unlock();
     }
-  }
-  
-  public void addWaitingQuery(DatabaseQuery query) throws SQLException
-  {
-    query.setConnection(this._conn);
-    
-    // TODO: DRY
-    PreparedStatement statement = null;
-    String queryStr = query.getPreparedStatementStr();
-    if (!this._preparedStrToStatement.containsKey(queryStr))
-      this._preparedStrToStatement.put(queryStr, statement = this._conn.prepareStatement(queryStr));
-    else
-      statement = this._preparedStrToStatement.get(queryStr);
-    
-    if (this._preparedStrToStatement.size() > this._capacity)
-      this._preparedStrToStatement.remove(this._preparedStrToStatement.keySet().iterator().next());
-    
-    query.execute(statement);
-  }
+  } 
   
   public void execute() throws SQLException
-  {
+  {    
     this._queriesLock.lock();
     this._executing = false;
     try {
@@ -94,6 +88,8 @@ public class StatementExecutor
           return;
         }
       
+      this.reset();
+      this.setConnection(ImprintDatabase.getInstance().getConnection());
       this._executing = true;
       while(!this._queries.isEmpty())
       {
@@ -108,15 +104,18 @@ public class StatementExecutor
           statement = this._preparedStrToStatement.get(queryStr);
         
         if (this._preparedStrToStatement.size() > this._capacity)
-          this._preparedStrToStatement.remove(this._preparedStrToStatement.keySet().iterator().next());
-                
+          this._preparedStrToStatement.clear();
+        
+        long timingA = System.currentTimeMillis();
         query.execute(statement);                
+        timingC += System.currentTimeMillis() - timingA; 
         //statement.close();
       }
     } finally {
       if (this._executing)
         this._queriesLock.unlock();
       this._executing = false;
+      this.reset();
     }    
   }
 }

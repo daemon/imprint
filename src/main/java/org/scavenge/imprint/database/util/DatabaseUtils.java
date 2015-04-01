@@ -17,10 +17,10 @@ public class DatabaseUtils
   public static int updateBlockId(int blockId, int blockMetadata) throws SQLException
   {
     ImprintDatabase db = ImprintDatabase.getInstance();
-    db.executeWaiting(new BlockIdUpdate(blockId, blockMetadata));
+    db.executeBlocking(new BlockIdUpdate(blockId, blockMetadata));
     
     BlockIdQuery query;
-    db.executeWaiting(query = new BlockIdQuery(blockId, blockMetadata));
+    db.executeBlocking(query = new BlockIdQuery(blockId, blockMetadata));
     
     return query.getRowId();
   }
@@ -28,10 +28,10 @@ public class DatabaseUtils
   public static int updatePlayerId(String playerName) throws SQLException
   {
     ImprintDatabase db = ImprintDatabase.getInstance();
-    db.executeWaiting(new PlayerIdUpdate(playerName));
+    db.executeBlocking(new PlayerIdUpdate(playerName));
         
     PlayerIdQuery query = new PlayerIdQuery(playerName);
-    db.executeWaiting(query);
+    db.executeBlocking(query);
     
     return query.getRowId();
   }

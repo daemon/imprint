@@ -45,23 +45,17 @@ public class ImprintDatabase
     this.getExecutor().addQuery(query);
   }
   
-  public void executeWaiting(DatabaseQuery query)
+  public void executeBlocking(DatabaseQuery query)
   {
     // TODO timeout
-    boolean done = false;
-    while (!done)
+    try
     {
-      try
-      {
-        this.getExecutor().addWaitingQuery(query);
-        done = true;
-      } catch (SQLException e)
-      {
-        try
-        {
-          this.getExecutor().setConnection(this.getConnection());
-        } catch (SQLException e1) {}      
-      }
+      query.execute();
+    } catch (SQLException e)
+    {      
+      return;
+    } finally {
+      query.close();
     }
   }
   

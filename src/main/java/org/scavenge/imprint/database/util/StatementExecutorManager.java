@@ -7,7 +7,6 @@ import org.scavenge.imprint.database.ImprintDatabase;
 
 public class StatementExecutorManager implements Runnable
 {
-  public long timingC = 0;
   private Thread _thread;
   private Connection _conn;
   private StatementExecutor _executor;
@@ -37,13 +36,12 @@ public class StatementExecutorManager implements Runnable
   {
     this._thread.interrupt();
     this._running = false;
-    System.out.println(timingC);
+    System.out.println(this._executor.timingC);
   }
 
   @Override
   public void run()
-  {
-    long timingA = System.currentTimeMillis();
+  {   
     while (this._running)
     {
       try
@@ -53,11 +51,19 @@ public class StatementExecutorManager implements Runnable
       {
         try
         {
-          _executor.setConnection(ImprintDatabase.getInstance().getConnection());
+          _executor.setConnection(this._conn = ImprintDatabase.getInstance().getConnection());
         } catch (SQLException e1)
         {
           try
           {
+            try
+            {
+              if (this._conn != null)
+                this._conn.close();
+            } catch (SQLException e2)
+            {
+              e2.printStackTrace();
+            }
             Thread.sleep(2500);
           } catch (InterruptedException e2)
           {
@@ -65,9 +71,17 @@ public class StatementExecutorManager implements Runnable
           }
           e1.printStackTrace();
         }
+      } finally {
+        if (this._conn != null)
+          try
+          {
+            this._conn.close();
+          } catch (SQLException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
       }
-      long timingB = System.currentTimeMillis();
-      timingC += (timingB - timingA);
     }
   }  
 }

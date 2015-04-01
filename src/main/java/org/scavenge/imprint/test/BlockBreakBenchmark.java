@@ -14,10 +14,10 @@ public class BlockBreakBenchmark
 {
   public static void main(String[] args) throws SQLException, InterruptedException
   {
-    if (args.length == 1)
+    if (args.length == 0)
       return;
     
-    String nTimesStr = "100000";//args[0];
+    String nTimesStr = args[0];
     
     int nTimes = Integer.parseInt(nTimesStr);
     ImprintDatabase.getInstance().init();
@@ -54,7 +54,7 @@ public class BlockBreakBenchmark
     long timingB = System.currentTimeMillis();
     
     System.out.println("Block breaking benchmark lasted " + (timingB - timingA) + " ms");
-    Thread.sleep((long) (nTimes * 1.5));
+    Thread.sleep(nTimes);
     ImprintDatabase.getInstance().getExecutorManager().stop();
   }
   
